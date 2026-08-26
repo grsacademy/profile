@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>프리미엄 디지털 명함</title>
+  <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+  <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+  
+  <style>
+    body { 
+      font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, sans-serif; 
+      background: #f0f2f5; 
+      display: flex; 
+      gap: 40px; 
+      padding: 40px; 
+      justify-content: center; 
+      flex-wrap: wrap;
+      margin: 0;
+    }
+    
+    /* 패널 공통 스타일 */
+    .panel { 
+      background: white; 
+      border-radius: 24px; 
+      box-shadow: 0 10px 40px rgba(0,0,0,0.04); 
+    }
+    
+    /* 좌측 입력 폼 영역 */
+    .editor-panel { 
+      width: 360px; 
+      padding: 30px;
+      display: flex; 
+      flex-direction: column; 
+      gap: 16px; 
+      height: fit-content;
+    }
+    .editor-panel h3 { margin: 0 0 10px 0; color: #111; font-size: 20px; }
+    .input-group { display: flex; flex-direction: column; gap: 8px; }
+    label { font-size: 13px; font-weight: 700; color: #666; }
+    input { 
+      padding: 14px; 
+      border: 1px solid #e1e4e8; 
+      border-radius: 12px; 
+      font-family: inherit;
+      font-size: 14px;
+      transition: border-color 0.2s;
+    }
+    input:focus { outline: none; border-color: #111; }
+    .btn-download {
+      margin-top: 16px;
+      padding: 16px;
+      background: #111;
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-weight: 700;
+      font-size: 15px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .btn-download:hover { background: #333; }
+
+    /* 우측 명함 미리보기 영역 */
+    .preview-panel { 
+      width: 380px; 
+      padding: 20px;
+      display: flex; 
+      align-items: center; 
+      justify-content: center; 
+      background: transparent;
+      box-shadow: none;
+    }
+    
+    /* 명함 실제 디자인 (제공된 이미지 스타일) */
+    .card { 
+      width: 100%; 
+      max-width: 340px;
+      min-height: 600px; 
+      background: #111; /* 다크 테마 배경 */
+      border-radius: 30px; 
+      box-shadow: 0 20px 50px rgba(0,0,0,0.2); 
+      overflow: hidden; 
+      position: relative; 
+      display: flex;
+      flex-direction: column;
+    }
+    
+    /* 상단 커버 이미지 */
+    .card-cover {
+      height: 250px;
+      background-image: url(''); /* JS로 동적 할당 */
+      background-size: cover;
+      background-position: center;
+      position: relative;
+    }
+    
+    /* 중간 정보 카드 (오렌지색) */
+    .card-header-wrapper {
+      padding: 0 20px;
+      margin-top: -50px; /* 커버 이미지 위로 겹치게 */
+      z-index: 10;
+    }
+    .card-header { 
+      background: #c77134; /* 오렌지색 배경 */
+      border-radius: 20px;
+      padding: 25px;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+    .card-name { margin: 0; font-size: 26px; font-weight: 800; color: #fff; letter-spacing: -0.5px; }
+    .card-role-wrapper { margin-top: 10px; display: flex; align-items: center; gap: 8px; }
+    .card-role { font-size: 14px; color: #fff; font-weight: 500; }
+    .card-department { font-size: 14px; color: rgba(255,255,255,0.7); font-weight: 400; }
+    
+    /* 태그 버튼 */
+    .tag-group { margin-top: 15px; display: flex; gap: 8px; }
+    .tag-btn {
+      padding: 8px 14px;
+      background: rgba(255,255,255,0.2);
+      border-radius: 10px;
+      color: #fff;
+      font-size: 13px;
+      font-weight: 600;
+    }
+    
+    /* 하단 연락처 리스트 스타일 (다크) */
+    .info-list {
+      padding: 30px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      margin-top: auto;
+    }
+    .info-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+    .info-label { font-size: 13px; font-weight: 500; color: rgba(255,255,255,0.6); }
+    .info-value-wrapper {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .info-value { font-size: 15px; font-weight: 600; color: #fff; text-align: right; }
+    .info-arrow { color: rgba(255,255,255,0.4); font-size: 14px; }
+    
+    /* 전화번호 링크(tel) 특화 스타일 */
+    .phone-link {
+      color: #fff;
+      text-decoration: none;
+    }
+    .phone-link:hover {
+      color: #c77134;
+    }
+    
+    /* 링크 아이콘 */
+    .link-icon { width: 18px; height: 18px; color: #fff; }
+  </style>
+</head>
+<body>
+
+  <!-- 좌측: 정보 입력 영역 -->
+  <div class="panel editor-panel">
+    <h3>명함 정보 편집</h3>
+    
+    <div class="input-group">
+      <label>사진 URL (흑백)</label>
+      <input type="text" id="in-pic" value="https://raw.githubusercontent.com/orioncactus/pretendard/main/pretendard/images/og-image.png">
+    </div>
+    <div class="input-group">
+      <label>이름</label>
+      <input type="text" id="in-name" value="김명함">
+    </div>
+    <div class="input-group">
+      <label>직무 / 부서</label>
+      <input type="text" id="in-role" value="컨텐츠 제작 | Visual Director">
+    </div>
+    <div class="input-group">
+      <label>태그 1</label>
+      <input type="text" id="in-tag1" value="포토그래퍼">
+    </div>
+    <div class="input-group">
+      <label>태그 2</label>
+      <input type="text" id="in-tag2" value="비디오그래퍼">
+    </div>
+    <div class="input-group">
+      <label>연락처 (터치 시 통화 연결)</label>
+      <input type="text" id="in-phone" value="010-0000-0000">
+    </div>
+    <div class="input-group">
+      <label>이메일</label>
+      <input type="text" id="in-email" value="dlehud77@gmail.com">
+    </div>
+    
+    <button class="btn-download" onclick="downloadCard()">명함 이미지 저장하기</button>
+  </div>
+
+  <!-- 우측: 명함 렌더링 영역 -->
+  <div class="preview-panel">
+    <!-- 이미지 저장 시 캡처될 영역 -->
+    <div class="card" id="business-card">
+      
+      <div class="card-cover" id="out-pic"></div>
+      
+      <div class="card-header-wrapper">
+        <div class="card-header">
+          <h2 class="card-name" id="out-name"></h2>
+          <div class="card-role-wrapper">
+            <div class="card-role" id="out-role"></div>
+          </div>
+          <div class="tag-group">
+            <div class="tag-btn" id="out-tag1"></div>
+            <div class="tag-btn" id="out-tag2"></div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="info-list">
+        <div class="info-item">
+          <div class="info-label">휴대전화</div>
+          <div class="info-value-wrapper">
+            <!-- tel: 링크가 적용될 a 태그 -->
+            <a href="#" class="info-value phone-link" id="out-phone-link">
+              <span id="out-phone-text"></span>
+            </a>
+            <div class="info-arrow">›</div>
+          </div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">이메일</div>
+          <div class="info-value-wrapper">
+            <div class="info-value" id="out-email"></div>
+            <div class="info-arrow">›</div>
+          </div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">
+            <svg class="link-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+            <span style="margin-left: 8px;">포트폴리오</span>
+          </div>
+          <div class="info-arrow">›</div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">
+            <svg class="link-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
+            <span style="margin-left: 8px;">인스타그램</span>
+          </div>
+          <div class="info-arrow">›</div>
+        </div>
+      </div>
+      
+    </div>
+  </div>
+
+  <script>
+    // 1. 일반 텍스트 및 이미지 동기화
+    const elementsToSync = [
+      { input: 'in-pic', output: 'out-pic', type: 'bg' },
+      { input: 'in-name', output: 'out-name', type: 'text' },
+      { input: 'in-role', output: 'out-role', type: 'text' },
+      { input: 'in-tag1', output: 'out-tag1', type: 'text' },
+      { input: 'in-tag2', output: 'out-tag2', type: 'text' },
+      { input: 'in-email', output: 'out-email', type: 'text' }
+    ];
+
+    function syncData() {
+      // 기본 정보 동기화
+      elementsToSync.forEach(item => {
+        const inputEl = document.getElementById(item.input);
+        const outputEl = document.getElementById(item.output);
+        
+        const updateOutput = (val) => {
+          if (item.type === 'bg') outputEl.style.backgroundImage = 'url(' + val + ')';
+          else outputEl.innerText = val;
+        };
+        
+        updateOutput(inputEl.value);
+        inputEl.addEventListener('input', (e) => updateOutput(e.target.value));
+      });
+
+      // 전화번호 전용 동기화 (tel: 링크 처리)
+      const phoneInput = document.getElementById('in-phone');
+      const phoneText = document.getElementById('out-phone-text');
+      const phoneLink = document.getElementById('out-phone-link');
+      
+      const updatePhone = (val) => {
+        phoneText.innerText = val;
+        // 숫자가 아닌 문자(하이픈 등)를 제거하여 tel: 포맷 생성
+        const cleanNumber = val.replace(/[^0-9+]/g, '');
+        phoneLink.href = 'tel:' + cleanNumber;
+      };
+      
+      updatePhone(phoneInput.value);
+      phoneInput.addEventListener('input', (e) => updatePhone(e.target.value));
+    }
+
+    // 2. 이미지 저장 (html2canvas)
+    function downloadCard() {
+      const card = document.getElementById('business-card');
+      
+      // 저장 전 스타일 최적화 (버튼 호버 이펙트 등 제거)
+      html2canvas(card, { 
+        scale: 3, // 고화질 저장
+        useCORS: true,
+        backgroundColor: null 
+      }).then(canvas => {
+        const link = document.createElement('a');
+        link.download = 'digital_business_card.png';
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+      });
+    }
+
+    syncData();
+  </script>
+</body>
+</html>
